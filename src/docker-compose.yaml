@@ -1,0 +1,48 @@
+version: '3'  
+services:
+  fastapi:
+    build: ./api
+    ports:
+      # all replicas listen at port 8000 - the host port isn't defined, i think is automatically defined then detected by nginx
+      - "8000"
+    volumes:
+      # containing trained models
+      - type: bind
+        source: ./api/models
+        target: /api/models
+        read_only: true
+      # containing config files
+      - type: bind
+        source: ./config
+        target: /config
+        read_only: true
+    deploy:
+      replicas: 3
+    
+  nginx:
+    build: ./nginx
+    ports:
+      # nginx listens at port 80 and 443 for http and https messages
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - fastapi
+    volumes:
+      # nginx configuration file
+      - type: bind
+        source: ./nginx/nginx.conf    
+        target: /etc/nginx/nginx.conf
+        read_only: true
+        # containing SSL certificates
+      - type: bind
+        source: /etc/letsencrypt
+        target: /etc/letsencrypt
+        read_only: true 
+      # - type: bind
+      #   source: /etc/letsencrypt/archive/dsaichingfhen.com 
+      #   target: /etc/letsencrypt/archive/dsaichingfhen.com 
+      #   read_only: true 
+      # - type: bind
+      #   source: /etc/letsencrypt/live/dsaichingfhen.com 
+      #   target: /etc/letsencrypt/live/dsaichingfhen.com 
+      #   read_only: true 

@@ -4,9 +4,9 @@ import yaml
 from classes import Product
 
 # load configurations
-local_path = r"C:\Users\tanch\Documents\NTU\NTU Year 4\FYP - GNN\Recommender API\deploy-fastapi-recommendation-system\src\config\database-config.yaml"
+local_path = r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\config\database-config.yaml"
 volume_path = "/config/database-config.yaml"
-config_path = local_path if os.path.exists(local_path) else volume_path
+config_path = local_path if os.environ.get('DOCKER_CONTAINER') is None else volume_path
 with open(config_path, "r") as f:
     try:
         database_config = yaml.safe_load(f)
@@ -25,7 +25,7 @@ database_cursor = database_connection.cursor()
 Get info of 1 item 
 """
 def get_product_info(cur, item_id):
-    cur.execute(f"select * from {database_config['TABLE_NAME']} where product_id={item_id};")
+    cur.execute(f"select * from {database_config['PRODUCT_INFO_TABLE_NAME']} where product_id={item_id};")
     item = next(cur)
     return Product(product_id = item[0], product_name = item[1], categories = item[2], image_url = item[3])
 

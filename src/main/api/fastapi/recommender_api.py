@@ -18,15 +18,14 @@ config.update(database_config)
 config.update(model_config)
 
 
-local_path = r"C:\Users\tanch\Documents\NTU\NTU Year 4\FYP - GNN\Recommender API\deploy-fastapi-recommendation-system\src\config\seller-config.yaml"
+local_path = r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\config\seller-config.yaml"
 volume_path = "/config/seller-config.yaml"
-config_path = local_path if os.path.exists(local_path) else volume_path
+config_path = local_path if os.environ.get('DOCKER_CONTAINER') is None else volume_path
 with open(config_path, "r") as f:
     try:
         config.update(yaml.safe_load(f))
     except yaml.YAMLError as exc:
         print(exc)
-
 
 
 """

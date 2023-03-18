@@ -1,22 +1,19 @@
 # sar
 from recommenders.models.sar import SAR
-# lightgcn
-# from recommenders.models.deeprec.models.graphrec.lightgcn import LightGCN
-# from recommenders.models.deeprec.deeprec_utils import prepare_hparams
-# general
+from model_utils import sar_load
+
 import yaml
 import os
 
-from model_utils import sar_load
 
 
 """
-MODEL
+This script will load the chosen recommendation model
 """
 # load configurations
-local_path = r"C:\Users\tanch\Documents\NTU\NTU Year 4\FYP - GNN\Recommender API\deploy-fastapi-recommendation-system\src\config\model-config.yaml"
+local_path = r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\config\model-config.yaml"
 volume_path = "/config/model-config.yaml"
-config_path = local_path if os.path.exists(local_path) else volume_path
+config_path = local_path if os.environ.get('DOCKER_CONTAINER') is None else volume_path
 with open(config_path, "r") as f:
     try:
         model_config = yaml.safe_load(f)
@@ -29,13 +26,11 @@ if model_config["MODEL_TYPE"] not in model_config["MODEL_SUPPORTED_TYPES"]:
     
 # load specific model configurations
 if model_config["MODEL_TYPE"]=="sar":
-    local_path = r"C:\Users\tanch\Documents\NTU\NTU Year 4\FYP - GNN\Recommender API\deploy-fastapi-recommendation-system\src\config\sar-config.yaml"
+    local_path = r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\config\sar-config.yaml"
     volume_path = "/config/sar-config.yaml"
-    config_path = local_path if os.path.exists(local_path) else volume_path
+    config_path = local_path if os.environ.get('DOCKER_CONTAINER') is None else volume_path
 elif model_config["MODEL_TYPE"]=="lightgcn":
-    local_path = r"C:\Users\tanch\Documents\NTU\NTU Year 4\FYP - GNN\Recommender API\deploy-fastapi-recommendation-system\src\config\lightgcn-config.yaml"
-    volume_path = "/config/lightgcn-config.yaml"
-    config_path = local_path if os.path.exists(local_path) else volume_path
+    raise ValueError("Oops Something went Wrong!")
 with open(config_path, "r") as f:
     try:
         model_config.update(yaml.safe_load(f))
@@ -59,26 +54,7 @@ if model_config["MODEL_TYPE"]=="sar":
 
 elif model_config["MODEL_TYPE"]=="lightgcn":
     raise ValueError("Oops Something went Wrong!")
-    hparams = prepare_hparams(yaml_file,
-                              n_layers=2,
-                              loss_type = loss_type, 
-                              loss_neg_weight = loss_neg_weight, 
-                              log_wandb = log_wandb,
-                              batch_size=BATCH_SIZE,
-                              epochs=50,
-                              learning_rate=0.01,
-                              eval_epoch=1,
-                              top_k=TOP_K,
-                              COL_USER = USER_ID_COL,
-                              COL_ITEM = ITEM_ID_COL,
-                              COL_RATING = RATING_COL,
-                              save_model = save_model,
-                            save_epoch = save_epoch,
-                            MODEL_DIR = MODEL_DIR
-                              )
-    # initiate model
-    model = LightGCN(hparams, data, seed=SEED)
-    model.load(model_config['MODEL_DIR'])
+    
 
 if __name__ == "__main__":
     print("Done")

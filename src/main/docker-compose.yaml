@@ -24,7 +24,7 @@ services:
     ports:
       # nginx listens at port 80 and 443 for http and https messages
       - "80:80"
-      # - "443:443"
+      - "443:443"
     depends_on:
       - fastapi
     volumes:

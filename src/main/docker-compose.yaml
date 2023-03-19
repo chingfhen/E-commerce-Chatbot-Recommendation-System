@@ -34,15 +34,7 @@ services:
         target: /etc/nginx/nginx.conf
         read_only: true
         # containing SSL certificates
-      # - type: bind
-      #   source: /etc/letsencrypt
-      #   target: /etc/letsencrypt
-      #   read_only: true 
-      # - type: bind
-      #   source: /etc/letsencrypt/archive/dsaichingfhen.com 
-      #   target: /etc/letsencrypt/archive/dsaichingfhen.com 
-      #   read_only: true 
-      # - type: bind
-      #   source: /etc/letsencrypt/live/dsaichingfhen.com 
-      #   target: /etc/letsencrypt/live/dsaichingfhen.com 
-      #   read_only: true 
+      - type: bind
+        source: /etc/letsencrypt
+        target: /etc/letsencrypt
+        read_only: true 

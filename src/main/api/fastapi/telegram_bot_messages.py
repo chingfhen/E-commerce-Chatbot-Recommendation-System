@@ -1,5 +1,5 @@
 import requests
-from classes import Product
+from bot_world_classes import Product
 import json
 import os
 import yaml

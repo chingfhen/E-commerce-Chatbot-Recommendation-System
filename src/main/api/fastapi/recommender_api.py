@@ -7,7 +7,7 @@ import yaml
 import os
 from db import database_config, database_connection, database_cursor, get_product_info
 from model import model_config, model
-from classes import Query, Product
+from bot_world_classes import Query, Product, SessionRecommendations
 from telegram_bot_messages import send_recommendation
 
 

@@ -1,7 +1,7 @@
 import mysql.connector
 import os
 import yaml
-from classes import Product
+from bot_world_recommendations import Product
 
 # load configurations
 local_path = r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\config\database-config.yaml"

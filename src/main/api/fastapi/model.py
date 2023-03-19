@@ -13,7 +13,7 @@ This script will load the chosen recommendation model
 # load configurations
 local_path = r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\config\model-config.yaml"
 volume_path = "/config/model-config.yaml"
-config_path = local_path if os.environ.get('DOCKER_CONTAINER') is None else volume_path
+config_path = local_path if os.path.exists(local_path) else volume_path
 with open(config_path, "r") as f:
     try:
         model_config = yaml.safe_load(f)
@@ -28,7 +28,7 @@ if model_config["MODEL_TYPE"] not in model_config["MODEL_SUPPORTED_TYPES"]:
 if model_config["MODEL_TYPE"]=="sar":
     local_path = r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\config\sar-config.yaml"
     volume_path = "/config/sar-config.yaml"
-    config_path = local_path if os.environ.get('DOCKER_CONTAINER') is None else volume_path
+    config_path = local_path if os.path.exists(local_path) else volume_path
 elif model_config["MODEL_TYPE"]=="lightgcn":
     raise ValueError("Oops Something went Wrong!")
 with open(config_path, "r") as f:

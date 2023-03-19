@@ -6,7 +6,7 @@ from classes import Product
 # load configurations
 local_path = r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\config\database-config.yaml"
 volume_path = "/config/database-config.yaml"
-config_path = local_path if os.environ.get('DOCKER_CONTAINER') is None else volume_path
+config_path = local_path if os.path.exists(local_path) else volume_path
 with open(config_path, "r") as f:
     try:
         database_config = yaml.safe_load(f)

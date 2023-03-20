@@ -9,13 +9,16 @@ from db import database_config, database_connection, database_cursor, get_produc
 from model import model_config, model
 from bot_world_classes import Query, Product, SessionRecommendations
 from telegram_bot_messages import send_recommendation
+from session import session_config, session
 
-
+# CREATE SESSION
 
 # load config
 config = {}
 config.update(database_config)
 config.update(model_config)
+config.update(session_config)
+
 
 
 local_path = r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\config\seller-config.yaml"
@@ -43,7 +46,7 @@ Output: {"recommendations": [item123,item321]}
 # @app.post("/recommend")
 @app.post("/recommend")
 async def recommend(query: Query):
-    model_output = model.recommend_k_items(pd.DataFrame({"user_id":[query.user_id]}), top_k=min(query.top_k, config["TOP_K"]), remove_seen=True)
+    model_output = model.recommend_k_items(pd.DataFrame({"user_id":[query.user_id]}), top_k=config["SESSION_RECOMMENDATION_SIZE"], remove_seen=True)
     item_ids = model_output[config["COL_ITEM"]].tolist()
     return {"recommendations": item_ids}
 """
@@ -55,15 +58,19 @@ Output:
 """
 @app.post("/manychat/recommend")
 async def manychat_recommend(query: Query):
-    # make recommendation
-    model_output = model.recommend_k_items(pd.DataFrame({"user_id":[query.user_id]}), top_k=min(query.top_k, 1), remove_seen=True)
-    item_ids = model_output[config["COL_ITEM"]].tolist()  
-    item_id = int(item_ids[0])
 
-    # retrieve product info
-    product = get_product_info(database_cursor, item_id)    
+    if not session.exists(query.user_id):
+        # call the model
+        model_output = model.recommend_k_items(pd.DataFrame({"user_id":[query.user_id]}), top_k=config["SESSION_RECOMMENDATION_SIZE"], remove_seen=True)
+        item_ids = list(map(int, model_output[config["COL_ITEM"]].tolist()))
+        # call the database
+        products = get_products(database_cursor, item_ids)    
+        # add to session
+        session.add(user_id = query.user_id, recommendations = products)
+    
+    item = session.recommend(user_id = query.user_id)
 
-    send_recommendation(query.chat_id, product)
+    send_recommendation(query.chat_id, item)
     
     return {
         "version": "v2",

@@ -7,5 +7,5 @@ Input to get recommendation
 """
 class Query(BaseModel):
     user_id: str
-    top_k: int
+    top_k: Optional[int] = 1
     chat_id: Optional[int] = None

@@ -10,12 +10,12 @@ class SessionRecommendations(object):
     """
     Checks that 1. Session recommendations for a user was made before 2. Session recommendations is not empty
     """
-    def session_exists(self, user_id: str):
+    def exists(self, user_id: str):
         return (self.session.get(str(user_id)) is not None) and (len(self.session[str(user_id)])>0)
     """
     Add new session - add new set of recommendations
     """
-    def add_session(self, user_id: str, recommendations: List):
+    def add(self, user_id: str, recommendations: List):
         self.session[str(user_id)] = deque(recommendations)
     """
     Make 1 recommendation for user - if session exists

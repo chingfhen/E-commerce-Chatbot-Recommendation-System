@@ -1,7 +1,9 @@
 FROM python:3.9
 
+ENV CONFIG_DIR=/api/bot_world_config
+
 # set working directory of container
-WORKDIR /app
+WORKDIR /api
 
 # install dependencies first - leverage cache
 # RUN pip install --no-cache-dir --upgrade -r ./requirements.txt

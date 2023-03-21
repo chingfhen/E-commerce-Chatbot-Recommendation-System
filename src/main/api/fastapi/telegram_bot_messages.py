@@ -1,32 +1,12 @@
 import requests
 from bot_world_classes import Product
 import json
-import os
-import yaml
+import sys
+sys.path.append("..")
+from bot_world_config import load_telegram_bot_config, load_seller_config
 
 
-# load config
-config = {}
-local_path = r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\config\telegram-bot-config.yaml"
-volume_path = "/config/telegram-bot-config.yaml"
-config_path = local_path if os.path.exists(local_path) else volume_path
-with open(config_path, "r") as f:
-    try:
-        config.update(yaml.safe_load(f))
-    except yaml.YAMLError as exc:
-        print(exc)
-
-local_path = r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\config\seller-config.yaml"
-volume_path = "/config/seller-config.yaml"
-config_path = local_path if os.path.exists(local_path) else volume_path
-with open(config_path, "r") as f:
-    try:
-        config.update(yaml.safe_load(f))
-    except yaml.YAMLError as exc:
-        print(exc)
-
-
-def send_recommendation(chat_id, product: Product):
+def send_recommendation(chat_id, product: Product, config):
 
     r = requests.post(
             url = f"https://api.telegram.org/bot{config['BOT_TOKEN']}/sendPhoto", 
@@ -47,5 +27,10 @@ def send_recommendation(chat_id, product: Product):
 
 
 if __name__=="__main__":
-    print("Done")  
+    CONFIG = load_telegram_bot_config()
+    CONFIG.update(load_seller_config())
+    send_recommendation(chat_id = 513516525, 
+                        product = Product(product_id = 23826146098, product_name = "a product name", categories = "a product category", image_url = "https://cf.shopee.sg/file/sg-11134207-23020-9nqha14zvsnvf4"),
+                        config = CONFIG)
+    print("Telegram Messages Send Success!")  
 

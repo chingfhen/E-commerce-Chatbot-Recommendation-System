@@ -13,11 +13,16 @@ services:
         read_only: true
       # containing config files
       - type: bind
-        source: ./config
-        target: /config
+        source: ./api/bot_world_config
+        target: /api/bot_world_config
+        read_only: true
+      # sqlite database - for development
+      - type: bind
+        source: ./database/arietes
+        target: /database/arietes
         read_only: true
     deploy:
-      replicas: 3
+      replicas: 1
     
   nginx:
     build: ./nginx

@@ -22,7 +22,7 @@ services:
         target: /database/arietes
         read_only: true
     deploy:
-      replicas: 1
+      replicas: 2
     
   nginx:
     build: ./nginx

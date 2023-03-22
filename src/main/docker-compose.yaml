@@ -1,30 +1,5 @@
 version: '3'  
 services:
-  fastapi:
-    build: ./api
-    ports:
-      # all replicas listen at port 8000 - the host port isn't defined, i think is automatically defined then detected by nginx
-      - "50001:8000"
-      - "50002:8001"
-    volumes:
-      # containing trained models
-      - type: bind
-        source: ./api/models
-        target: /api/models
-        read_only: true
-      # containing config files
-      - type: bind
-        source: ./api/bot_world_config
-        target: /api/bot_world_config
-        read_only: true
-      # sqlite database - for development
-      - type: bind
-        source: ./database/arietes
-        target: /database/arietes
-        read_only: true
-    deploy:
-      replicas: 2
-    
   nginx:
     build: ./nginx
     ports:
@@ -44,3 +19,71 @@ services:
         source: /etc/letsencrypt
         target: /etc/letsencrypt
         read_only: true 
+        
+  fastapi0:
+    build: ./api
+    ports:
+      # all replicas listen at port 8000 - the host port isn't defined, i think is automatically defined then detected by nginx
+      - "50000:8000"
+    volumes:
+      # containing trained models
+      - type: bind
+        source: ./api/models
+        target: /api/models
+        read_only: true
+      # containing config files
+      - type: bind
+        source: ./api/bot_world_config
+        target: /api/bot_world_config
+        read_only: true
+      # sqlite database - for development
+      - type: bind
+        source: ./database/arietes
+        target: /database/arietes
+        read_only: true
+  fastapi1:
+    build: ./api
+    ports:
+      # all replicas listen at port 8000 - the host port isn't defined, i think is automatically defined then detected by nginx
+      - "50001:8000"
+    volumes:
+      # containing trained models
+      - type: bind
+        source: ./api/models
+        target: /api/models
+        read_only: true
+      # containing config files
+      - type: bind
+        source: ./api/bot_world_config
+        target: /api/bot_world_config
+        read_only: true
+      # sqlite database - for development
+      - type: bind
+        source: ./database/arietes
+        target: /database/arietes
+        read_only: true
+
+
+  # fastapi:
+  #   build: ./api
+  #   ports:
+  #     # all replicas listen at port 8000 - the host port isn't defined, i think is automatically defined then detected by nginx
+  #     - "8000"
+  #   volumes:
+  #     # containing trained models
+  #     - type: bind
+  #       source: ./api/models
+  #       target: /api/models
+  #       read_only: true
+  #     # containing config files
+  #     - type: bind
+  #       source: ./api/bot_world_config
+  #       target: /api/bot_world_config
+  #       read_only: true
+  #     # sqlite database - for development
+  #     - type: bind
+  #       source: ./database/arietes
+  #       target: /database/arietes
+  #       read_only: true
+  #   deploy:
+  #     replicas: 2

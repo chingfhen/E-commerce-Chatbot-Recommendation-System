@@ -7,7 +7,8 @@ services:
       - "80:80"
       - "443:443"
     depends_on:
-      - fastapi
+      - fastapi0
+      - fastapi1
     volumes:
       # nginx configuration file
       - type: bind
@@ -19,7 +20,7 @@ services:
         source: /etc/letsencrypt
         target: /etc/letsencrypt
         read_only: true 
-        
+
   fastapi0:
     build: ./api
     ports:

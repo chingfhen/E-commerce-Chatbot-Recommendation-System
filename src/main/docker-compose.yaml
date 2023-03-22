@@ -4,7 +4,8 @@ services:
     build: ./api
     ports:
       # all replicas listen at port 8000 - the host port isn't defined, i think is automatically defined then detected by nginx
-      - "8000"
+      - "50001:8000"
+      - "50002:8001"
     volumes:
       # containing trained models
       - type: bind

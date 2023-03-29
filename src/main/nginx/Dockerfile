@@ -2,7 +2,7 @@
 FROM nginx:alpine
 
 # source path is relative to this dockerfile
-COPY /modules/ngx_http_set_misc_module.so /usr/lib/nginx/modules/ngx_http_set_misc_module.so
+# COPY /modules/ngx_http_set_misc_module.so /usr/lib/nginx/modules/ngx_http_set_misc_module.so
 
 # Expose port 80 for the Nginx server
 EXPOSE 80

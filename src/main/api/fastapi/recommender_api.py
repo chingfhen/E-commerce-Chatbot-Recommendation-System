@@ -49,7 +49,7 @@ async def root():
 """
 Documentation
 """
-@app.get("/recommend")
+@app.post("/recommend")
 async def recommend(recommend_request: RecommendRequest):
     
     recommended_item_ids = []
@@ -83,7 +83,7 @@ async def recommend(recommend_request: RecommendRequest):
 """
 Documentation
 """
-@app.get("/manychat/recommend")
+@app.post("/manychat/recommend")
 async def manychat_recommend(chat_id: int, recommend_request: RecommendRequest):
     
     ID = get_session_id(chat_id = chat_id, by = recommend_request.by, user_id = recommend_request.user_id, item_id = recommend_request.item_id)

@@ -19,7 +19,7 @@ def send_telegram_recommendation(config, telegram_recommendation: TelegramRecomm
                 "reply_markup":json.dumps({
                 "inline_keyboard":[[
                         {
-                        "text":"More Info",
+                        "text":"Purchase Item",
                         "url":f"https://shopee.sg/product/{config['SELLER_ID']}/{telegram_recommendation.item.product_id}"
                         }
                     ]]

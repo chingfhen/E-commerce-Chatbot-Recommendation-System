@@ -1,12 +1,14 @@
 import pandas as pd
 import json
 from fastapi import FastAPI
+from typing import Optional
+from math import ceil
 
 from db import establish_database_connection, get_products
 from model import load_sar_model
-from bot_world_classes import Query, Product, SessionRecommendations
-from telegram_bot_messages import send_recommendation
-from session import load_session
+from bot_world_classes import *
+from telegram_bot_messages import send_telegram_recommendation
+from session import load_session, get_session_id
 
 import sys
 sys.path.append("..")
@@ -41,43 +43,94 @@ FASTAPI
 """
 app = FastAPI()
 @app.get("/")
-async def recommend():
+async def root():
     return {"response": "Welcome to Bot.World!"}
+
 """
-Standard Recommendation
-Input: Query
-Output: {"recommendations": [item123,item321]}
+Documentation
 """
-# @app.post("/recommend")
 @app.post("/recommend")
-async def recommend(query: Query):
-    model_output = global_model.recommend_k_items(pd.DataFrame({"user_id":[query.user_id]}), top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"], remove_seen=True)
-    item_ids = model_output[config["COL_ITEM"]].tolist()
-    return {"recommendations": item_ids}
+async def recommend(recommend_request: RecommendRequest):
+    
+    recommended_item_ids = []
+    
+    if recommend_request.by == "user":
+        model_output = global_model.recommend_k_items(test = pd.DataFrame({CONFIG["COL_USER"]:[recommend_request.user_id]}), 
+                                                      top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"], 
+                                                      remove_seen=True)
+        recommended_item_ids = model_output[CONFIG["COL_ITEM"]].tolist()
+    elif recommend_request.by == "item":
+        model_output = global_model.get_item_based_topk(items = pd.DataFrame({CONFIG["COL_ITEM"]:[recommend_request.item_id]}), 
+                                                        top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"])
+        recommended_item_ids = model_output[CONFIG["COL_ITEM"]].tolist()
+    elif recommend_request.by == "popularity":
+        model_output = global_model.get_popularity_based_topk(top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"])
+        recommended_item_ids = model_output[CONFIG["COL_ITEM"]].tolist()
+
+    elif recommend_request.by =="hybrid":
+
+        model_output_popularity_based = global_model.get_popularity_based_topk(top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"])
+        recommended_item_ids.extend(model_output_popularity_based[CONFIG["COL_ITEM"]].tolist()[:ceil(CONFIG["SESSION_RECOMMENDATION_SIZE"]/2)])
+
+        model_output_user_based = global_model.recommend_k_items(test = pd.DataFrame({CONFIG["COL_USER"]:[recommend_request.user_id]}), 
+                                                                top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"]//2, 
+                                                                remove_seen=True)
+        recommended_item_ids.extend(model_output_user_based[CONFIG["COL_ITEM"]].tolist())
+
+        
+    return {"recommendations": recommended_item_ids}
+
 """
-ManyChat Response
-Input: Query
-Output: 
-    - 1 item recommendation
-    - item details e.g. title, product url, image url
+Documentation
 """
 @app.post("/manychat/recommend")
-async def manychat_recommend(query: Query):
+async def manychat_recommend(chat_id: int, recommend_request: RecommendRequest):
+    
+    ID = get_session_id(chat_id = chat_id, by = recommend_request.by, user_id = recommend_request.user_id, item_id = recommend_request.item_id)
 
-    if not global_session.exists(query.user_id):
-        # call the model
-        model_output = global_model.recommend_k_items(pd.DataFrame({"user_id":[query.user_id]}), top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"], remove_seen=True)
-        item_ids = list(map(int, model_output[CONFIG["COL_ITEM"]].tolist()))
-        # call the database
-        products = get_products(global_database_connection, item_ids, CONFIG)    
+    # if session doesn't exist, then make a model and database call
+    if not global_session.exists(ID = ID):
+
+        recommended_item_ids = []
+    
+        if recommend_request.by == "user":
+            model_output = global_model.recommend_k_items(test = pd.DataFrame({CONFIG["COL_USER"]:[recommend_request.user_id]}), 
+                                                        top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"], 
+                                                        remove_seen=True)
+            recommended_item_ids = model_output[CONFIG["COL_ITEM"]].tolist()
+
+        elif recommend_request.by == "item":
+            model_output = global_model.get_item_based_topk(items = pd.DataFrame({CONFIG["COL_ITEM"]:[recommend_request.item_id]}), 
+                                                            top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"])
+            recommended_item_ids = model_output[CONFIG["COL_ITEM"]].tolist()
+
+        elif recommend_request.by == "popularity":
+            model_output = global_model.get_popularity_based_topk(top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"])
+            recommended_item_ids = model_output[CONFIG["COL_ITEM"]].tolist()
+
+        elif recommend_request.by =="hybrid":
+            model_output_popularity_based = global_model.get_popularity_based_topk(top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"])
+            recommended_item_ids.extend(model_output_popularity_based[CONFIG["COL_ITEM"]].tolist()[:ceil(CONFIG["SESSION_RECOMMENDATION_SIZE"]/2)])
+
+            model_output_user_based = global_model.recommend_k_items(test = pd.DataFrame({CONFIG["COL_USER"]:[recommend_request.user_id]}), 
+                                                                    top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"]//2, 
+                                                                    remove_seen=True)
+            recommended_item_ids.extend(model_output_user_based[CONFIG["COL_ITEM"]].tolist())
+
+        # DATABASE CALL
+        products = get_products(CONFIG, global_database_connection, recommended_item_ids)   
+
         # add to session
-        global_session.add(user_id = query.user_id, recommendations = products)
-        print("Made model and database call. Created User Session")
-    
-    item = global_session.recommend(user_id = query.user_id)
+        global_session.add(ID = ID, recommendations = products) 
 
-    send_recommendation(query.chat_id, item, CONFIG)
-    
+    # retrieve 1 recommendation from session
+    item = global_session.recommend(ID = ID)
+
+    telegram_recommendation = TelegramRecommendation(chat_id = chat_id, item = item)
+
+    # send recommendation to telegram
+    send_telegram_recommendation(config = CONFIG,  telegram_recommendation = telegram_recommendation)
+        
     return {
         "version": "v2",
         "content": {
@@ -110,4 +163,3 @@ async def manychat_recommend(query: Query):
             # "quick_replies": []
         }
     }
-

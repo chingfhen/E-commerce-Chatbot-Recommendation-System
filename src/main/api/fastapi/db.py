@@ -34,7 +34,7 @@ def get_product(database_connection, item_id, config):
 """
 Get list of Product
 """
-def get_products(database_connection, item_ids: list, config):
+def get_products(config, database_connection, item_ids: list):
     cur = database_connection.cursor()
     comma_separated_item_ids = ",".join(map(str,item_ids))
     cur.execute(f"select * from {config['PRODUCT_INFO_TABLE_NAME']} where product_id in ({comma_separated_item_ids});")
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     print("Config Load Success!")
     database_connection = establish_database_connection(CONFIG)
     print("Database Connection Success!")
-    product = get_product(database_connection, 23821143235, CONFIG)
-    products = get_products(database_connection, [23821143235], CONFIG)
+    product = get_product(database_connection, "23821143235", CONFIG)
+    products = get_products(CONFIG, database_connection, ["23821143235"])
     print("Product Retrieval Success!")
     print(product, products)

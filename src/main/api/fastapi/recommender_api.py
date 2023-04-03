@@ -154,10 +154,15 @@ async def manychat_recommend(chat_id: int, recommend_request: RecommendRequest):
                 #         }
                 #     ]
                 # },
-                # {
-                #     "type": "text",
-                #     "text": product_name
-                # }
+                {
+                    "type": "text",
+                    "text": "hellooo",
+                    "buttons":[{
+                        "type": "flow",
+                        "caption": "Nexttt",
+                        "target": "content20230329055930_635372"
+                    }]
+                }
                 ],
             # "actions": [],
             # "quick_replies": []

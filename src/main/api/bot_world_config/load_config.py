@@ -23,6 +23,9 @@ if IN_DOCKER:
     def load_telegram_bot_config():
         with open(os.path.join(os.environ.get("CONFIG_DIR"),"telegram-bot-config.yaml"), "r") as f:
             return yaml.safe_load(f)
+    def load_manychat_config():
+        with open(os.path.join(os.environ.get("CONFIG_DIR"),"manychat-config.yaml"), "r") as f:
+            return yaml.safe_load(f)
 
 else:     
     def load_database_config():
@@ -42,4 +45,7 @@ else:
             return yaml.safe_load(f)
     def load_telegram_bot_config():
         with open(r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\api\bot_world_config\telegram-bot-config.yaml", "r") as f:
+            return yaml.safe_load(f)    
+    def load_manychat_config():
+        with open(r"C:\Users\tanch\Desktop\Bot.World\Bot.World\src\main\api\bot_world_config\manychat-config.yaml", "r") as f:
             return yaml.safe_load(f)    

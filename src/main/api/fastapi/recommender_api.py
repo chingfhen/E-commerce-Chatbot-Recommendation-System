@@ -9,6 +9,8 @@ from db import establish_database_connection, get_products
 from model import load_sar_model, predict
 from bot_world_classes import *
 from session import load_session, get_session_id
+from telegram_bot_messages import send_telegram_image
+from manychat import get_manychat_flow_id
 
 
 
@@ -21,6 +23,7 @@ CONFIG.update(load_session_config())
 CONFIG.update(load_seller_config())
 CONFIG.update(load_sar_config())
 CONFIG.update(load_telegram_bot_config())
+CONFIG.update(load_manychat_config())
 print("Config Load Success!")
 
 
@@ -76,6 +79,9 @@ async def manychat_recommend(chat_id: int, recommend_request: RecommendRequest):
 
     # retrieve 1 recommendation from session
     item = global_session.recommend(ID = ID)
+
+    # send the image manually because manychat image request not ideal
+    send_telegram_image(CONFIG, TelegramRecommendation(chat_id = chat_id, item = item))
         
     return {
         "version": "v2",
@@ -83,17 +89,13 @@ async def manychat_recommend(chat_id: int, recommend_request: RecommendRequest):
             "type":"telegram",
             "messages": [
                 {
-                    "type": "image",
-                    "url": item.image_url
-                },
-                {
                     "type": "text",
                     "text": item.product_name,
                     "buttons": [
                         {
                             "type": "flow",
                             "caption": "Next",
-                            "target": "content20230329055930_635372"
+                            "target": get_manychat_flow_id(CONFIG, by = recommend_request.by)
                         },
                         {
                             "type": "url",

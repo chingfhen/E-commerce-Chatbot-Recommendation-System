@@ -1,18 +1,16 @@
-import pandas as pd
 import json
 from fastapi import FastAPI
-from typing import Optional
-from math import ceil
-
-from db import establish_database_connection, get_products
-from model import load_sar_model
-from bot_world_classes import *
-from telegram_bot_messages import send_telegram_recommendation
-from session import load_session, get_session_id
+import uvicorn
 
 import sys
 sys.path.append("..")
 from bot_world_config import *
+from db import establish_database_connection, get_products
+from model import load_sar_model, predict
+from bot_world_classes import *
+from session import load_session, get_session_id
+
+
 
 
 # load config
@@ -52,32 +50,8 @@ Documentation
 @app.post("/recommend")
 async def recommend(recommend_request: RecommendRequest):
     
-    recommended_item_ids = []
+    recommended_item_ids = predict(CONFIG, global_model, recommend_request)
     
-    if recommend_request.by == "user":
-        model_output = global_model.recommend_k_items(test = pd.DataFrame({CONFIG["COL_USER"]:[recommend_request.user_id]}), 
-                                                      top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"], 
-                                                      remove_seen=True)
-        recommended_item_ids = model_output[CONFIG["COL_ITEM"]].tolist()
-    elif recommend_request.by == "item":
-        model_output = global_model.get_item_based_topk(items = pd.DataFrame({CONFIG["COL_ITEM"]:[recommend_request.item_id]}), 
-                                                        top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"])
-        recommended_item_ids = model_output[CONFIG["COL_ITEM"]].tolist()
-    elif recommend_request.by == "popularity":
-        model_output = global_model.get_popularity_based_topk(top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"])
-        recommended_item_ids = model_output[CONFIG["COL_ITEM"]].tolist()
-
-    elif recommend_request.by =="hybrid":
-
-        model_output_popularity_based = global_model.get_popularity_based_topk(top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"])
-        recommended_item_ids.extend(model_output_popularity_based[CONFIG["COL_ITEM"]].tolist()[:ceil(CONFIG["SESSION_RECOMMENDATION_SIZE"]/2)])
-
-        model_output_user_based = global_model.recommend_k_items(test = pd.DataFrame({CONFIG["COL_USER"]:[recommend_request.user_id]}), 
-                                                                top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"]//2, 
-                                                                remove_seen=True)
-        recommended_item_ids.extend(model_output_user_based[CONFIG["COL_ITEM"]].tolist())
-
-        
     return {"recommendations": recommended_item_ids}
 
 """
@@ -91,31 +65,8 @@ async def manychat_recommend(chat_id: int, recommend_request: RecommendRequest):
     # if session doesn't exist, then make a model and database call
     if not global_session.exists(ID = ID):
 
-        recommended_item_ids = []
-    
-        if recommend_request.by == "user":
-            model_output = global_model.recommend_k_items(test = pd.DataFrame({CONFIG["COL_USER"]:[recommend_request.user_id]}), 
-                                                        top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"], 
-                                                        remove_seen=True)
-            recommended_item_ids = model_output[CONFIG["COL_ITEM"]].tolist()
-
-        elif recommend_request.by == "item":
-            model_output = global_model.get_item_based_topk(items = pd.DataFrame({CONFIG["COL_ITEM"]:[recommend_request.item_id]}), 
-                                                            top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"])
-            recommended_item_ids = model_output[CONFIG["COL_ITEM"]].tolist()
-
-        elif recommend_request.by == "popularity":
-            model_output = global_model.get_popularity_based_topk(top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"])
-            recommended_item_ids = model_output[CONFIG["COL_ITEM"]].tolist()
-
-        elif recommend_request.by =="hybrid":
-            model_output_popularity_based = global_model.get_popularity_based_topk(top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"])
-            recommended_item_ids.extend(model_output_popularity_based[CONFIG["COL_ITEM"]].tolist()[:ceil(CONFIG["SESSION_RECOMMENDATION_SIZE"]/2)])
-
-            model_output_user_based = global_model.recommend_k_items(test = pd.DataFrame({CONFIG["COL_USER"]:[recommend_request.user_id]}), 
-                                                                    top_k=CONFIG["SESSION_RECOMMENDATION_SIZE"]//2, 
-                                                                    remove_seen=True)
-            recommended_item_ids.extend(model_output_user_based[CONFIG["COL_ITEM"]].tolist())
+        # MODEL CALL
+        recommended_item_ids = predict(CONFIG, global_model, recommend_request)
 
         # DATABASE CALL
         products = get_products(CONFIG, global_database_connection, recommended_item_ids)   
@@ -125,46 +76,36 @@ async def manychat_recommend(chat_id: int, recommend_request: RecommendRequest):
 
     # retrieve 1 recommendation from session
     item = global_session.recommend(ID = ID)
-
-    telegram_recommendation = TelegramRecommendation(chat_id = chat_id, item = item)
-
-    # send recommendation to telegram
-    send_telegram_recommendation(config = CONFIG,  telegram_recommendation = telegram_recommendation)
         
     return {
         "version": "v2",
         "content": {
             "type":"telegram",
             "messages": [
-                # {
-                #     "type": "image",
-                #     "url": image_url,
-                #     "buttons": [
-                #         {
-                #             "type": "url",
-                #             "caption": "Product Link",
-                #             "url": product_url,
-                #             "webview_size": "full"
-                #         },
-                #         {
-                #             "type": "url",
-                #             "caption": config['SHOP_NAME'],
-                #             "url": config['SHOP_URL'],
-                #             "webview_size": "full"
-                #         }
-                #     ]
-                # },
+                {
+                    "type": "image",
+                    "url": item.image_url
+                },
                 {
                     "type": "text",
-                    "text": "hellooo",
-                    "buttons":[{
-                        "type": "flow",
-                        "caption": "Nexttt",
-                        "target": "content20230329055930_635372"
-                    }]
+                    "text": item.product_name,
+                    "buttons": [
+                        {
+                            "type": "flow",
+                            "caption": "Next",
+                            "target": "content20230329055930_635372"
+                        },
+                        {
+                            "type": "url",
+                            "caption": "Purchase",
+                            "url": f"https://shopee.sg/product/{CONFIG['SELLER_ID']}/{item.product_id}",
+                            "webview_size": "full"
+                        }
+                    ]
                 }
-                ],
-            # "actions": [],
-            # "quick_replies": []
+            ]
         }
     }
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

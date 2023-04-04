@@ -95,7 +95,7 @@ async def manychat_recommend(chat_id: int, recommend_request: RecommendRequest):
                         {
                             "type": "flow",
                             "caption": "Next",
-                            "target": get_manychat_flow_id(CONFIG, by = recommend_request.by)
+                            "target": CONFIG['RECOMMENDATION_FLOW_ID']
                         },
                         {
                             "type": "url",

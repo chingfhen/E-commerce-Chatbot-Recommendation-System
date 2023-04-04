@@ -102,6 +102,11 @@ async def manychat_recommend(chat_id: int, recommend_request: RecommendRequest):
                             "caption": "Purchase",
                             "url": f"https://shopee.sg/product/{CONFIG['SELLER_ID']}/{item.product_id}",
                             "webview_size": "full"
+                        },
+                        {
+                            "type": "flow",
+                            "caption": "Menu",
+                            "target": CONFIG['MAIN_MENU_FLOW_ID']
                         }
                     ]
                 }

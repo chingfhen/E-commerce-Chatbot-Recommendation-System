@@ -1,8 +1,0 @@
-DATABASE_USER: "ching"
-DATABASE_PASSWORD: "978775!Rtj01"
-DATABASE_HOST: "aws-bot-world-mysql.c6ecc5e9b7no.ap-southeast-1.rds.amazonaws.com"
-DATABASE_NAME: "Arietes_Care"
-PRODUCT_INFO_TABLE_NAME: "product_info"
-USE_RDS: false
-DATABASE_PATH_TANCH: "C:\\Users\\tanch\\Desktop\\Bot.World\\Bot.World\\src\\main\\database\\arietes\\arietes.db"
-DATABASE_PATH_DOCKER: "/database/arietes/arietes.db"
